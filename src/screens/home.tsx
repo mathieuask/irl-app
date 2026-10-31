@@ -4,12 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Nav } from '../nav';
 import { AV, C, IMG } from '../theme';
 import { Appear, Avatar, Back, Fond, MoiPin, Pill, Verre, st } from '../ui';
+import { MapClean } from './create';
 
 export function Home({ nav }: { nav: Nav; p: any }) {
   return (
     <View style={{ flex: 1, backgroundColor: '#dfeaf5' }}>
-      <Fond veil={0.04} />
+      <MapClean />
       <View style={h.center}><MoiPin size={70} halo={150} /></View>
+      <Ami id="lea" nom="Léa" d="300 m" style={{ left: 36, top: 170 }} />
+      <Ami id="hugo" nom="Hugo" d="450 m" style={{ right: 38, top: 332 }} />
+      <Ami id="sam" nom="Sam" d="700 m" style={{ left: 40, top: 500 }} />
       <View style={h.top}>
         <Image source={IMG.logo} style={h.logo} />
         <Pressable onPress={() => nav.go('profil')}>
@@ -22,6 +26,18 @@ export function Home({ nav }: { nav: Nav; p: any }) {
         <Appear><Pill label="Lancer une partie" h={68} onPress={() => nav.go('choix')} /></Appear>
         <Appear delay={120} style={{ marginTop: 12 }}><Pill label="Rejoindre avec un code" kind="verre" h={62} onPress={() => nav.go('rejoindre')} /></Appear>
       </Verre>
+    </View>
+  );
+}
+
+function Ami({ id, nom, d, style }: { id: keyof typeof AV; nom: string; d: string; style: any }) {
+  return (
+    <View style={[{ position: 'absolute', alignItems: 'center' }, style]}>
+      <View>
+        <Avatar src={AV[id]} size={66} />
+        <View style={h.dot} />
+      </View>
+      <Verre radius={16} style={{ marginTop: -10, paddingVertical: 4, paddingHorizontal: 12 }}><Text style={h.ami}>{nom} · {d}</Text></Verre>
     </View>
   );
 }
@@ -103,6 +119,7 @@ const h = StyleSheet.create({
   dot: { position: 'absolute', right: 0, bottom: 2, width: 18, height: 18, borderRadius: 9, backgroundColor: C.bleu, borderWidth: 3, borderColor: '#fff' },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, paddingHorizontal: 22, paddingTop: 14, paddingBottom: 46 },
   grab: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: '#C3CCDD', marginBottom: 14 },
+  ami: { fontSize: 14, fontWeight: '800', color: C.texte },
   nom: { fontSize: 26, fontWeight: '900', color: C.texte },
   sec: { fontSize: 22, fontWeight: '900', color: C.texte, marginTop: 30, marginBottom: 12 },
   row: { flexDirection: 'row', alignItems: 'center', padding: 14 },
@@ -111,7 +128,7 @@ const h = StyleSheet.create({
   close: { width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', shadowColor: '#2B5FA8', shadowOpacity: 0.2, shadowRadius: 10 },
   titre: { fontSize: 30, fontWeight: '900', color: '#0A0F2E', letterSpacing: -0.8 },
   cases: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 44 },
-  case: { width: 76, height: 92, alignItems: 'center', justifyContent: 'center' },
+  case: { width: 80, height: 100, alignItems: 'center', justifyContent: 'center' },
   caseOn: { borderColor: C.bleu, borderWidth: 3, shadowColor: C.bleu, shadowOpacity: 0.6, shadowRadius: 14 },
   caseT: { fontSize: 50, fontWeight: '900', color: '#0A0F2E' },
   caret: { width: 3, height: 44, borderRadius: 2, backgroundColor: C.bleu },

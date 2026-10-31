@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Nav } from '../nav';
@@ -11,7 +11,7 @@ const W = Dimensions.get('window').width;
 const SLIDES = [
   { k: 'logo' },
   { k: 'zone', t: 'Une zone. Un chrono.', s: 'Ta ville devient le terrain de jeu. Tout se passe dans le cercle.' },
-  { k: 'jeux', t: 'Trois jeux, zéro règle à lire.', s: "Manhunt, GeoGuessr, Trouve l'objet. Tu comprends en une seconde." },
+  { k: 'jeux', t: 'Trois jeux, zéro règle.', s: "Manhunt, GeoGuessr, Trouve l'objet. Tu comprends en une seconde." },
   { k: 'potes', t: 'Que tes potes.', s: "Pas d'inconnus, pas de liste d'amis. Un code, ta bande rejoint." },
 ];
 
@@ -28,6 +28,7 @@ export function Onboarding({ nav, p }: { nav: Nav; p: any }) {
   const start = Math.min(3, Math.max(0, Number(p?.pg) || 0));
   const [i, setI] = useState(start);
   const ref = useRef<any>(null);
+  useEffect(() => { if (start > 0) setTimeout(() => ref.current?.scrollTo({ x: start * W, animated: false }), 0); }, []);
   const go = (n: number) => { ref.current?.scrollTo({ x: n * W, animated: true }); setI(n); };
   const next = () => (i < SLIDES.length - 1 ? go(i + 1) : nav.go('pseudo'));
   return (
@@ -147,7 +148,7 @@ const o = StyleSheet.create({
   dotsTop: { position: 'absolute', top: 66, left: 0, right: 0 },
   bottom: { position: 'absolute', left: 20, right: 20, bottom: 34, gap: 8 },
   visu: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 70, paddingBottom: 150 },
-  textCard: { position: 'absolute', left: 20, right: 20, bottom: 140, paddingVertical: 18, paddingHorizontal: 20, alignItems: 'center' },
+  textCard: { position: 'absolute', left: 20, right: 20, bottom: 152, paddingVertical: 18, paddingHorizontal: 20, alignItems: 'center' },
   t: { fontSize: 28, fontWeight: '900', color: C.texte, textAlign: 'center', letterSpacing: -0.5 },
   s: { fontSize: 16, color: '#4A5670', marginTop: 8, lineHeight: 22, textAlign: 'center', fontWeight: '500' },
   chip: { position: 'absolute', bottom: 6, paddingVertical: 8, paddingHorizontal: 16 },
