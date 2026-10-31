@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Nav } from '../nav';
 import { C, IMG } from '../theme';
 import { Appear, Btn, useCountdown } from '../ui';
-import { Chrono, Pill } from '../jeuui';
+import { BasPhoto, Cible, TILE, usePhoto } from '../jeuui';
 import { play } from '../sound';
 
 const ITEMS = ['bicycle', 'cafe', 'bus', 'trash', 'flower', 'car-sport', 'storefront', 'water'];
@@ -79,45 +79,11 @@ export function Slot({ nav, p }: { nav: Nav; p: any }) {
 
 export function Objet({ nav, p }: { nav: Nav; p: any }) {
   const t = useCountdown(4 * 60 + 12);
-  const [etat, setEtat] = useState<'vise' | 'envoi' | 'ok'>('vise');
-  const flash = useRef(new Animated.Value(0)).current;
-  const shoot = () => {
-    play('shutter');
-    flash.setValue(1);
-    Animated.timing(flash, { toValue: 0, duration: 500, useNativeDriver: true }).start();
-    setEtat('envoi');
-    setTimeout(() => { play('ding'); setEtat('ok'); }, 1300);
-  };
+  const { etat, flash, shoot } = usePhoto();
   return (
-    <View style={{ flex: 1, backgroundColor: '#000' }}>
-      <Image source={IMG.rue} style={StyleSheet.absoluteFill as any} resizeMode="cover" />
-      <View style={o.top}>
-        <Chrono s={t} />
-        <View style={o.target}><Image source={IMG.boite} style={{ width: 64, height: 64 }} resizeMode="contain" /></View>
-      </View>
-      {etat === 'vise' ? (
-        <View pointerEvents="none" style={o.viseur}>
-          <View style={[o.corner, { top: 0, left: 0, borderTopWidth: 5, borderLeftWidth: 5, borderTopLeftRadius: 26 }]} />
-          <View style={[o.corner, { top: 0, right: 0, borderTopWidth: 5, borderRightWidth: 5, borderTopRightRadius: 26 }]} />
-          <View style={[o.corner, { bottom: 0, left: 0, borderBottomWidth: 5, borderLeftWidth: 5, borderBottomLeftRadius: 26 }]} />
-          <View style={[o.corner, { bottom: 0, right: 0, borderBottomWidth: 5, borderRightWidth: 5, borderBottomRightRadius: 26 }]} />
-        </View>
-      ) : null}
-      <View style={o.bottomCam}>
-        {etat === 'vise' && <Pressable onPress={shoot} style={o.shutter}><View style={o.shutterIn} /></Pressable>}
-        {etat === 'envoi' && <Pill style={{ paddingHorizontal: 22, paddingVertical: 16 }}><Text style={o.pillT}>Photo envoyée, validation...</Text></Pill>}
-        {etat === 'ok' && (
-          <Appear style={{ width: '100%', alignItems: 'center', gap: 14 }}>
-            <Pill style={{ paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row' }}>
-              <Ionicons name="checkmark-circle" size={28} color={C.bleu} />
-              <Text style={[o.pillT, { marginLeft: 8, fontSize: 24 }]}>Validée</Text>
-            </Pill>
-            <Btn label="Voir le classement" onPress={() => nav.replace('fin', { ...p, issue: 'objet' })} style={{ alignSelf: 'stretch' }} />
-          </Appear>
-        )}
-      </View>
-      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', opacity: flash }]} />
-    </View>
+    <Cible t={t} flash={flash}
+      tile={<Image source={IMG.boite} style={{ width: TILE, height: TILE }} resizeMode="contain" />}
+      bas={<BasPhoto etat={etat} shoot={shoot} ok="Validée" label="Voir le classement" suite={() => nav.replace('fin', { ...p, issue: 'objet' })} />} />
   );
 }
 
@@ -137,13 +103,4 @@ const o = StyleSheet.create({
   arrow: { position: 'absolute', top: H * 1.5 - 20 },
   find: { color: 'rgba(255,255,255,0.9)', fontSize: 24, fontWeight: '800', marginTop: 36 },
   obj: { color: '#fff', fontSize: 36, fontWeight: '900', textAlign: 'center', marginTop: 24 },
-  top: { position: 'absolute', top: 54, left: 0, right: 0, alignItems: 'center' },
-  target: { backgroundColor: 'rgba(20,24,40,0.55)', borderRadius: 30, padding: 12, marginTop: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,0.5)' },
-  viseur: { position: 'absolute', top: '33%', left: '22%', right: '22%', height: '27%' },
-  corner: { position: 'absolute', width: 44, height: 44, borderColor: '#fff' },
-  bottomCam: { position: 'absolute', left: 20, right: 20, bottom: 44, alignItems: 'center' },
-  shutter: { width: 96, height: 96, borderRadius: 48, borderWidth: 5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.bleu, shadowOpacity: 1, shadowRadius: 20, shadowOffset: { width: 0, height: 0 } },
-  shutterIn: { width: 74, height: 74, borderRadius: 37, backgroundColor: C.bleu },
-  pillT: { fontWeight: '900', fontSize: 18, color: C.texte },
 });

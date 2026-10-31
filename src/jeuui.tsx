@@ -1,7 +1,9 @@
-import React from 'react';
-import { Dimensions, Image, ImageSourcePropType, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Animated, Dimensions, Image, ImageSourcePropType, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, IMG } from './theme';
+import { play } from './sound';
+import { Appear, Btn } from './ui';
 
 export const { width: W, height: H } = Dimensions.get('window');
 
@@ -94,9 +96,88 @@ export function ScaleBar({ px, label }: { px: number; label: string }) {
   );
 }
 
+// Squelette commun des jeux (modèle : Trouve l'objet) : caméra, chrono géant, cible, bouton du bas.
+export function usePhoto(son: 'ding' | 'tada' = 'ding') {
+  const [etat, setEtat] = useState<'vise' | 'envoi' | 'ok'>('vise');
+  const flash = useRef(new Animated.Value(0)).current;
+  const shoot = () => {
+    play('shutter');
+    flash.setValue(1);
+    Animated.timing(flash, { toValue: 0, duration: 500, useNativeDriver: true }).start();
+    setEtat('envoi');
+    setTimeout(() => { play(son); setEtat('ok'); }, 1300);
+  };
+  return { etat, flash, shoot };
+}
+
+export function Cible({ t, tile, legende, bas, flash, viseur = true }: {
+  t: number; tile: React.ReactNode; legende?: string; bas: React.ReactNode; flash?: Animated.Value; viseur?: boolean;
+}) {
+  return (
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <Image source={IMG.rue} style={StyleSheet.absoluteFill as any} resizeMode="cover" />
+      <View style={s.top}>
+        <Chrono s={t} />
+        <View style={s.target}>
+          {tile}
+          {legende ? <Text style={s.leg}>{legende}</Text> : null}
+        </View>
+      </View>
+      {viseur ? (
+        <View pointerEvents="none" style={s.viseur}>
+          <View style={[s.corner, { top: 0, left: 0, borderTopWidth: 5, borderLeftWidth: 5, borderTopLeftRadius: 26 }]} />
+          <View style={[s.corner, { top: 0, right: 0, borderTopWidth: 5, borderRightWidth: 5, borderTopRightRadius: 26 }]} />
+          <View style={[s.corner, { bottom: 0, left: 0, borderBottomWidth: 5, borderLeftWidth: 5, borderBottomLeftRadius: 26 }]} />
+          <View style={[s.corner, { bottom: 0, right: 0, borderBottomWidth: 5, borderRightWidth: 5, borderBottomRightRadius: 26 }]} />
+        </View>
+      ) : null}
+      <View style={s.bas}>{bas}</View>
+      {flash ? <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', opacity: flash }]} /> : null}
+    </View>
+  );
+}
+
+export const TILE = 88;
+
+export function Capturer({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={{ alignItems: 'center' }}>
+      <View style={s.shutter}><View style={s.shutterIn} /></View>
+      <Text style={s.capt}>Capturer</Text>
+    </Pressable>
+  );
+}
+
+export function BasPhoto({ etat, shoot, ok, suite, label }: {
+  etat: 'vise' | 'envoi' | 'ok'; shoot: () => void; ok: string; suite: () => void; label: string;
+}) {
+  if (etat === 'vise') return <Capturer onPress={shoot} />;
+  if (etat === 'envoi') return <Pill style={{ paddingHorizontal: 22, paddingVertical: 16 }}><Text style={s.pillT}>Photo envoyée, validation...</Text></Pill>;
+  return (
+    <Appear style={{ width: '100%', alignItems: 'center', gap: 14 }}>
+      <Pill style={{ paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row' }}>
+        <Ionicons name="checkmark-circle" size={28} color={C.bleu} />
+        <Text style={[s.pillT, { marginLeft: 8, fontSize: 24 }]}>{ok}</Text>
+      </Pill>
+      <Btn label={label} onPress={suite} style={{ alignSelf: 'stretch' }} />
+    </Appear>
+  );
+}
+
 const s = StyleSheet.create({
   pill: { backgroundColor: 'rgba(246,250,255,0.9)', borderRadius: 44, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center',
     shadowColor: C.azur, shadowOpacity: 0.75, shadowRadius: 18, shadowOffset: { width: 0, height: 4 } },
   tag: { borderRadius: 14, paddingHorizontal: 11, paddingVertical: 3, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
   tagT: { fontWeight: '900', fontSize: 13, color: C.texte },
+  top: { position: 'absolute', top: 54, left: 0, right: 0, alignItems: 'center' },
+  target: { backgroundColor: 'rgba(20,24,40,0.55)', borderRadius: 30, padding: 12, marginTop: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,0.5)', alignItems: 'center' },
+  leg: { color: '#fff', fontSize: 20, fontWeight: '900', marginTop: 6 },
+  viseur: { position: 'absolute', top: '36%', left: '22%', right: '22%', height: '24%' },
+  corner: { position: 'absolute', width: 44, height: 44, borderColor: '#fff' },
+  bas: { position: 'absolute', left: 20, right: 20, bottom: 44, alignItems: 'center' },
+  shutter: { width: 96, height: 96, borderRadius: 48, borderWidth: 5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center',
+    shadowColor: C.bleu, shadowOpacity: 1, shadowRadius: 20, shadowOffset: { width: 0, height: 0 } },
+  shutterIn: { width: 74, height: 74, borderRadius: 37, backgroundColor: C.bleu },
+  capt: { color: '#fff', fontSize: 20, fontWeight: '900', marginTop: 8, textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 6 },
+  pillT: { fontWeight: '900', fontSize: 18, color: C.texte },
 });

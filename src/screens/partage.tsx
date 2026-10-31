@@ -31,7 +31,7 @@ export function Partage({ nav, p }: { nav: Nav; p: any }) {
           <MapClean>
             {PTS.slice(0, -1).map((a, i) => <Seg key={i} a={a} b={PTS[i + 1]} color="#fff" w={7} />)}
             {photos.map((src, i) => (
-              <Image key={i} source={src} style={[s.photo, { left: PTS[i * 2].x - 36, top: PTS[i * 2].y - 36 }]} />
+              <Image key={i} source={src} style={[s.photo, { left: PTS[[0, 2, 3][i]].x - 36, top: PTS[[0, 2, 3][i]].y - 36 }]} />
             ))}
             <View style={[s.dot, { left: PTS[4].x - 14, top: PTS[4].y - 14 }]} />
           </MapClean>
@@ -66,7 +66,7 @@ const s = StyleSheet.create({
   stat: { flex: 1, alignItems: 'center' },
   v: { fontSize: 34, fontWeight: '900', color: C.bleu },
   l: { fontSize: 16, fontWeight: '800', color: C.texte },
-  actions: { position: 'absolute', bottom: 46, left: 14, right: 14, flexDirection: 'row', justifyContent: 'space-between' },
+  actions: { position: 'absolute', bottom: 46, left: 14, right: 14, marginTop: 6, flexDirection: 'row', justifyContent: 'space-between' },
   round: { width: 70, height: 70, borderRadius: 35, backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center',
     shadowColor: C.azur, shadowOpacity: 0.6, shadowRadius: 10, shadowOffset: { width: 0, height: 3 } },
   al: { fontSize: 14, fontWeight: '900', color: C.texte, marginTop: 6 },
