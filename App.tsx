@@ -21,8 +21,19 @@ const SCREENS: Record<string, React.ComponentType<{ nav: Nav; p: any }>> = {
   reveal: Reveal, manhunt: Manhunt, geo: Geo, slot: Slot, objet: Objet, fin: Fin,
 };
 
+// Web only: ?s=lobby&jeu=manhunt opens a screen directly, used for page-by-page captures.
+function initialRoute(): Route {
+  const loc = (globalThis as any).location;
+  if (!loc?.search) return { name: 'onboarding', p: {} };
+  const q = new URLSearchParams(loc.search);
+  const name = q.get('s') || 'onboarding';
+  const p: any = {};
+  q.forEach((v, k) => { if (k !== 's') p[k] = v; });
+  return { name: SCREENS[name] ? name : 'onboarding', p };
+}
+
 export default function App() {
-  const [stack, setStack] = useState<Route[]>([{ name: 'onboarding', p: {} }]);
+  const [stack, setStack] = useState<Route[]>(() => [initialRoute()]);
   const [dir, setDir] = useState(1);
   const x = useRef(new Animated.Value(0)).current;
   const cur = stack[stack.length - 1];
