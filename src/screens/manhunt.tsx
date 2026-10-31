@@ -93,7 +93,7 @@ function Chasseur({ nav, p }: { nav: Nav; p: any }) {
 }
 
 const m = StyleSheet.create({
-  center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  center: { ...StyleSheet.absoluteFill as any, alignItems: 'center', justifyContent: 'center' },
   pin: { position: 'absolute' },
   top: { position: 'absolute', top: 58, left: 20, right: 20, gap: 10 },
   lbl: { fontSize: 15, fontWeight: '800', color: '#6B7280', marginBottom: -6 },

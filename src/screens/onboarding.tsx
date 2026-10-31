@@ -16,7 +16,7 @@ const SLIDES = [
 
 export function Onboarding({ nav }: { nav: Nav; p: any }) {
   const [i, setI] = useState(0);
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<any>(null);
   const x = useRef(new Animated.Value(0)).current;
   const next = () => {
     if (i < SLIDES.length - 1) ref.current?.scrollTo({ x: (i + 1) * W, animated: true });
