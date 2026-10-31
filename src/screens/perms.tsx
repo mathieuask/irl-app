@@ -1,26 +1,35 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Nav } from '../nav';
-import { AV, C } from '../theme';
-import { Appear, Avatar, Btn, MapBg, Me, st } from '../ui';
+import { AV, C, IMG } from '../theme';
+import { Appear, Dots, Fond, LienSouligne, MoiPin, Pill, Verre } from '../ui';
 import { play } from '../sound';
 
 export function Selfie({ nav, p }: { nav: Nav; p: any }) {
-  const [ok, setOk] = useState(false);
+  const [ok, setOk] = useState(p?.ok === '1');
+  const prendre = () => { play('shutter'); setOk(true); };
   return (
-    <View style={[st.screen, { backgroundColor: '#fff' }]}>
-      <Etape n={2} />
-      <Appear><Text style={st.h1}>Ta tête, {p.pseudo || 'Mathieu'}</Text></Appear>
-      <Appear delay={100}><Text style={[st.p, { marginTop: 8 }]}>C'est ce que tes potes verront sur la carte.</Text></Appear>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Pressable onPress={() => { play('shutter'); setOk(true); }} style={k.selfie}>
-          {ok ? <Appear from={0}><Avatar src={AV.moi} size={220} ring={C.bleu} /></Appear> : <Ionicons name="camera" size={64} color={C.bleu} />}
+    <View style={{ flex: 1, backgroundColor: '#dfeaf5' }}>
+      <Fond veil={0.08} />
+      <View style={k.dotsTop}><Etape n={2} /></View>
+      <View style={k.selfieBox}>
+        <Pressable onPress={prendre}>
+          <View style={k.selfie}>
+            {ok ? <Appear from={0}><Image source={AV.moi} style={k.selfieImg} /></Appear> : <Ionicons name="person" size={130} color="#BCCBE6" style={{ marginTop: 40 }} />}
+          </View>
+          {!ok && <View style={k.cam}><Ionicons name="camera" size={26} color="#fff" /></View>}
         </Pressable>
-        <Text style={[st.p, { marginTop: 16 }]}>{ok ? 'Parfait.' : 'Touche pour prendre un selfie'}</Text>
       </View>
-      <Btn label={ok ? 'Continuer' : 'Prendre un selfie'} onPress={() => (ok ? nav.go('position', p) : (play('shutter'), setOk(true)))} />
-      <Pressable onPress={() => nav.go('position', p)}><Text style={k.later}>Plus tard</Text></Pressable>
+      <View style={k.selfieBottom}>
+        <Verre radius={30} style={{ paddingVertical: 20, alignItems: 'center' }}>
+          <Text style={k.selfieT}>{ok ? 'Parfait, ' + (p?.pseudo || 'Mathieu') : 'Ta tête sur la carte'}</Text>
+          <Text style={k.selfieS}>{ok ? 'Voilà comme tes potes te verront.' : 'Tes potes te verront comme ça.'}</Text>
+        </Verre>
+        <Pill label={ok ? 'Continuer' : 'Prendre un selfie'} onPress={() => (ok ? nav.go('position', p) : prendre())} style={{ marginTop: 12 }} />
+        {ok ? <View style={{ height: 38 }} /> : <LienSouligne label="Plus tard" onPress={() => nav.go('position', p)} />}
+        <Text style={k.foot}>Seulement pour ton selfie et tes photos de partie.</Text>
+      </View>
     </View>
   );
 }
@@ -39,47 +48,58 @@ function Popup({ titre, texte, oui, non, onOui, onNon }: any) {
 }
 
 export function Position({ nav, p }: { nav: Nav; p: any }) {
-  const [pop, setPop] = useState(false);
+  const [pop, setPop] = useState(p?.pop === '1');
+  const lignes = [
+    { ic: 'location-outline', t: 'Visible seulement pendant une partie' },
+    { ic: 'people-outline', t: 'Seulement par tes potes' },
+    { ic: 'time-outline', t: 'Coupée à la fin' },
+  ];
   return (
-    <View style={{ flex: 1 }}>
-      <MapBg zone={240}><View style={k.center}><Me /></View></MapBg>
-      <View style={k.sheet}>
-        <Etape n={3} />
-        <Text style={st.h1}>Active ta position</Text>
-        <Text style={[st.p, { marginVertical: 10 }]}>Pour savoir qui est dans la zone. Seulement pendant une partie, jamais visible par des inconnus.</Text>
-        <Btn label="Autoriser" icon="location" onPress={() => setPop(true)} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#dfeaf5' }}>
+      <Fond veil={0.02} />
+      <View style={k.dotsTop}><Etape n={3} /></View>
+      <View style={k.posCenter}><MoiPin size={70} halo={140} /></View>
+      <Verre radius={40} style={k.sheet}>
+        <Text style={k.sheetT}>Active ta position</Text>
+        {lignes.map((l) => (
+          <View key={l.t} style={k.ligne}>
+            <View style={k.ligneIc}><Ionicons name={l.ic as any} size={26} color={C.bleu} /></View>
+            <Text style={k.ligneT}>{l.t}</Text>
+          </View>
+        ))}
+        <Pill label="Activer la localisation" onPress={() => setPop(true)} style={{ marginTop: 14 }} />
+        <LienSouligne label="Plus tard" onPress={() => nav.go('notifs', p)} />
+      </Verre>
       {pop && <Popup titre="Autoriser « IRL » à utiliser votre position ?" texte="Ta position sert uniquement pendant une partie, pour la zone et les autres joueurs."
         oui="Autoriser pendant l'utilisation" non="Ne pas autoriser" onOui={() => nav.go('notifs', p)} onNon={() => nav.go('notifs', p)} />}
     </View>
   );
 }
 
-export function Notifs({ nav }: { nav: Nav; p: any }) {
-  const [pop, setPop] = useState(false);
+export function Notifs({ nav, p }: { nav: Nav; p: any }) {
+  const [pop, setPop] = useState(p?.pop === '1');
   return (
-    <View style={[st.screen, { backgroundColor: C.nuit }]}>
-      <Etape n={4} light />
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Appear style={k.notif}>
-          <View style={k.notifIc}><Ionicons name="flash" size={22} color="#fff" /></View>
+    <View style={{ flex: 1, backgroundColor: '#dfeaf5' }}>
+      <Fond veil={0.1} />
+      <View style={k.dotsTop}><Etape n={4} /></View>
+      <Appear style={k.banner}>
+        <Verre radius={24} style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}>
+          <Image source={IMG.logo} style={k.bannerIc} />
           <View style={{ flex: 1 }}>
-            <Text style={k.notifT}>IRL</Text>
-            <Text style={k.notifS}>Léa lance un Manhunt à 300 m. Rejoins avant 18h.</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={k.bannerApp}>irl</Text><Text style={k.bannerApp}>maintenant</Text>
+            </View>
+            <Text style={k.bannerT}>Hugo a lancé une partie de Manhunt près de toi</Text>
           </View>
-        </Appear>
-        <Appear delay={200} style={{ ...k.notif, opacity: 0.8 } as any}>
-          <View style={[k.notifIc, { backgroundColor: C.rouge }]}><Ionicons name="eye" size={22} color="#fff" /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={k.notifT}>IRL</Text>
-            <Text style={k.notifS}>Ta position est révélée dans 10 s.</Text>
-          </View>
-        </Appear>
-        <Text style={k.nT}>Ne rate aucune partie</Text>
-        <Text style={k.nS}>On te prévient quand tes potes lancent un jeu près de toi.</Text>
+        </Verre>
+      </Appear>
+      <View style={k.notifBottom}>
+        <Verre radius={34} style={{ paddingVertical: 24, paddingHorizontal: 20 }}>
+          <Text style={k.notifTitre}>Sois prévenu quand tes potes lancent une partie</Text>
+          <Pill label="Activer les notifications" onPress={() => setPop(true)} style={{ marginTop: 18 }} />
+          <LienSouligne label="Plus tard" onPress={() => nav.reset('home')} />
+        </Verre>
       </View>
-      <Btn label="Activer les notifs" kind="blanc" icon="notifications" onPress={() => setPop(true)} />
-      <Pressable onPress={() => nav.reset('home')}><Text style={[k.later, { color: '#fff' }]}>Continuer sans</Text></Pressable>
       {pop && <Popup titre="« IRL » souhaite vous envoyer des notifications" texte="Alertes, sons et pastilles."
         oui="Autoriser" non="Refuser" onOui={() => nav.reset('home')} onNon={() => nav.reset('home')} />}
     </View>
@@ -87,20 +107,31 @@ export function Notifs({ nav }: { nav: Nav; p: any }) {
 }
 
 export function Etape({ n, light }: { n: number; light?: boolean }) {
-  return (
-    <View style={k.steps}>
-      {[1, 2, 3, 4].map((i) => (
-        <View key={i} style={[k.step, { backgroundColor: light ? 'rgba(255,255,255,0.3)' : '#E3EAF7' }, i <= n && { backgroundColor: light ? '#fff' : C.bleu }]} />
-      ))}
-    </View>
-  );
+  return <Dots n={5} i={n} />;
 }
 
 const k = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  selfie: { width: 230, height: 230, borderRadius: 115, backgroundColor: '#F2F6FF', alignItems: 'center', justifyContent: 'center' },
-  later: { textAlign: 'center', color: C.gris, fontWeight: '700', fontSize: 15, paddingVertical: 14 },
-  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#fff', borderTopLeftRadius: 34, borderTopRightRadius: 34, padding: 24, paddingBottom: 44 },
+  dotsTop: { position: 'absolute', top: 66, left: 0, right: 0 },
+  selfieBox: { position: 'absolute', top: 190, left: 0, right: 0, alignItems: 'center' },
+  selfie: { width: 230, height: 230, borderRadius: 115, backgroundColor: 'rgba(225,238,255,0.92)', borderWidth: 5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', shadowColor: C.bleu, shadowOpacity: 0.5, shadowRadius: 24 },
+  selfieImg: { width: 230, height: 230 },
+  cam: { position: 'absolute', right: 2, bottom: 12, width: 58, height: 58, borderRadius: 29, backgroundColor: C.bleu, borderWidth: 4, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  selfieBottom: { position: 'absolute', left: 16, right: 16, bottom: 28 },
+  selfieT: { fontSize: 29, fontWeight: '900', color: C.texte, letterSpacing: -0.6 },
+  selfieS: { fontSize: 17, color: '#4A5670', marginTop: 4 },
+  foot: { textAlign: 'center', color: '#4A5670', fontSize: 13, marginTop: 6 },
+  posCenter: { position: 'absolute', top: 250, left: 0, right: 0, alignItems: 'center' },
+  sheet: { position: 'absolute', left: 6, right: 6, bottom: 6, paddingHorizontal: 22, paddingTop: 24, paddingBottom: 22 },
+  sheetT: { fontSize: 32, fontWeight: '900', color: C.texte, textAlign: 'center', letterSpacing: -0.8, marginBottom: 14 },
+  ligne: { flexDirection: 'row', alignItems: 'center', gap: 14, marginVertical: 7 },
+  ligneIc: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#EAF1FC', alignItems: 'center', justifyContent: 'center' },
+  ligneT: { flex: 1, fontSize: 18, fontWeight: '500', color: C.texte },
+  banner: { position: 'absolute', top: 210, left: 18, right: 18 },
+  bannerIc: { width: 50, height: 50, borderRadius: 13 },
+  bannerApp: { fontSize: 14, fontWeight: '600', color: '#6B7690' },
+  bannerT: { fontSize: 16, fontWeight: '800', color: C.texte, marginTop: 2 },
+  notifBottom: { position: 'absolute', left: 16, right: 16, bottom: 56 },
+  notifTitre: { fontSize: 30, fontWeight: '900', color: '#141A44', textAlign: 'center', letterSpacing: -0.8, lineHeight: 35 },
   veil: { ...(StyleSheet.absoluteFill as object), backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
   pop: { width: 280, backgroundColor: 'rgba(245,245,247,0.98)', borderRadius: 16, overflow: 'hidden', alignItems: 'center' },
   popT: { fontSize: 17, fontWeight: '700', textAlign: 'center', paddingHorizontal: 16, paddingTop: 18, color: '#000' },
