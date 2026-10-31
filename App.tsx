@@ -10,6 +10,7 @@ import { Manhunt } from './src/screens/manhunt';
 import { Geo } from './src/screens/geo';
 import { Slot, Objet } from './src/screens/objet';
 import { Fin } from './src/screens/fin';
+import { Partage } from './src/screens/partage';
 import { Selfie, Position, Notifs } from './src/screens/perms';
 import { play } from './src/sound';
 
@@ -18,7 +19,7 @@ const W = Dimensions.get('window').width;
 const SCREENS: Record<string, React.ComponentType<{ nav: Nav; p: any }>> = {
   onboarding: Onboarding, pseudo: Pseudo, selfie: Selfie, position: Position, notifs: Notifs, home: Home, profil: Profil, rejoindre: Rejoindre,
   choix: ChoixJeu, paywall: Paywall, distance: Distance, lobby: Lobby, countdown: Countdown,
-  reveal: Reveal, manhunt: Manhunt, geo: Geo, slot: Slot, objet: Objet, fin: Fin,
+  reveal: Reveal, manhunt: Manhunt, partage: Partage, geo: Geo, slot: Slot, objet: Objet, fin: Fin,
 };
 
 // Web only: ?s=lobby&jeu=manhunt opens a screen directly, used for page-by-page captures.

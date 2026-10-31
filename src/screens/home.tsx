@@ -3,20 +3,25 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { Nav } from '../nav';
 import { AV, C, IMG } from '../theme';
-import { Appear, Avatar, Back, Btn, Glass, MapBg, Me, st } from '../ui';
+import { Appear, Avatar, Back, Fond, MoiPin, Pill, Verre, st } from '../ui';
 
 export function Home({ nav }: { nav: Nav; p: any }) {
   return (
-    <View style={{ flex: 1 }}>
-      <MapBg zone={0}><View style={h.center}><Me /></View></MapBg>
+    <View style={{ flex: 1, backgroundColor: '#dfeaf5' }}>
+      <Fond veil={0.04} />
+      <View style={h.center}><MoiPin size={70} halo={150} /></View>
       <View style={h.top}>
         <Image source={IMG.logo} style={h.logo} />
-        <Pressable onPress={() => nav.go('profil')}><Avatar src={AV.moi} size={52} /></Pressable>
+        <Pressable onPress={() => nav.go('profil')}>
+          <Avatar src={AV.moi} size={58} />
+          <View style={h.dot} />
+        </Pressable>
       </View>
-      <View style={h.bottom}>
-        <Appear><Btn label="Lancer une partie" icon="play" onPress={() => nav.go('choix')} style={{ height: 68, borderRadius: 34 }} /></Appear>
-        <Appear delay={120}><Btn label="Rejoindre" kind="blanc" icon="enter" onPress={() => nav.go('rejoindre')} /></Appear>
-      </View>
+      <Verre radius={38} style={h.sheet}>
+        <View style={h.grab} />
+        <Appear><Pill label="Lancer une partie" h={68} onPress={() => nav.go('choix')} /></Appear>
+        <Appear delay={120} style={{ marginTop: 12 }}><Pill label="Rejoindre avec un code" kind="verre" h={62} onPress={() => nav.go('rejoindre')} /></Appear>
+      </Verre>
     </View>
   );
 }
@@ -29,68 +34,88 @@ const PARTIES = [
 
 export function Profil({ nav }: { nav: Nav; p: any }) {
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#fff' }} contentContainerStyle={st.screen}>
-      <Back onPress={nav.back} />
-      <Appear style={{ alignItems: 'center', marginTop: 10 }}>
-        <Avatar src={AV.moi} size={120} ring={C.bleu} />
-        <Text style={[st.h1, { marginTop: 12 }]}>Mathieu</Text>
-        <Text style={st.p}>12 parties jouées</Text>
-      </Appear>
-      <Text style={h.sec}>Anciennes parties</Text>
-      {PARTIES.map((x, i) => (
-        <Appear key={i} delay={100 + i * 80}>
-          <View style={h.row}>
-            <View style={h.ic}><Ionicons name={x.ic as any} size={22} color="#fff" /></View>
-            <View style={{ flex: 1 }}>
-              <Text style={h.rowT}>{x.jeu}</Text>
-              <Text style={st.p}>{x.date} · {x.res}</Text>
-            </View>
-          </View>
+    <View style={{ flex: 1, backgroundColor: '#dfeaf5' }}>
+      <Fond veil={0.12} />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={st.screen}>
+        <Back onPress={nav.back} />
+        <Appear style={{ alignItems: 'center', marginTop: 6 }}>
+          <Avatar src={AV.moi} size={120} ring="#fff" />
+          <Verre radius={26} style={{ paddingVertical: 8, paddingHorizontal: 22, marginTop: 14, alignItems: 'center' }}>
+            <Text style={h.nom}>Mathieu</Text>
+          </Verre>
+          <Text style={[st.p, { marginTop: 8 }]}>12 parties jouées</Text>
         </Appear>
-      ))}
-    </ScrollView>
+        <Text style={h.sec}>Anciennes parties</Text>
+        {PARTIES.map((x, i) => (
+          <Appear key={i} delay={100 + i * 80} style={{ marginBottom: 10 }}>
+            <Verre radius={26} style={h.row}>
+              <View style={[h.ic, { backgroundColor: x.jeu === 'Manhunt' ? C.rouge : C.bleu }]}><Ionicons name={x.ic as any} size={22} color="#fff" /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={h.rowT}>{x.jeu}</Text>
+                <Text style={st.p}>{x.date} · {x.res}</Text>
+              </View>
+            </Verre>
+          </Appear>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
-export function Rejoindre({ nav }: { nav: Nav; p: any }) {
-  const [code, setCode] = useState('');
+export function Rejoindre({ nav, p }: { nav: Nav; p: any }) {
   const keys = ['K', '7', 'Q', '2'];
-  const tap = () => {
-    if (code.length < 4) {
-      const n = code + keys[code.length];
-      setCode(n);
-      if (n.length === 4) setTimeout(() => nav.replace('lobby', { jeu: 'manhunt', invite: true }), 500);
-    }
-  };
+  const [code, setCode] = useState(keys.slice(0, Math.min(4, Number(p?.code) || 0)).join(''));
+  const entrer = () => nav.replace('lobby', { jeu: 'manhunt', invite: true });
+  const tap = () => { if (code.length < 4) setCode(code + keys[code.length]); };
   return (
-    <View style={[st.screen, { backgroundColor: '#fff' }]}>
-      <Back onPress={nav.back} />
-      <Text style={[st.h1, { marginTop: 20 }]}>Entre le code</Text>
-      <Text style={st.p}>Demande-le au créateur de la partie.</Text>
-      <Pressable onPress={tap} style={h.cases}>
-        {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={[h.case, code[i] ? { borderColor: C.bleu } : null]}>
-            <Text style={h.caseT}>{code[i] || ''}</Text>
-          </View>
-        ))}
-      </Pressable>
-      <Text style={[st.p, { textAlign: 'center' }]}>Touche les cases pour saisir le code</Text>
-      <View style={{ flex: 1 }} />
-      <Btn label="Scanner un QR" kind="blanc" icon="qr-code" onPress={() => nav.replace('lobby', { jeu: 'manhunt', invite: true })} />
+    <View style={{ flex: 1, backgroundColor: '#dfeaf5' }}>
+      <Fond veil={0.1} />
+      <View style={{ flex: 1, paddingTop: 64, paddingHorizontal: 20, paddingBottom: 40 }}>
+        <Pressable onPress={nav.back} hitSlop={16} style={h.close}><Ionicons name="close" size={26} color={C.texte} /></Pressable>
+        <Appear style={{ marginTop: 50 }}>
+          <Verre radius={34} style={{ paddingVertical: 18, alignItems: 'center' }}><Text style={h.titre}>Rejoindre une partie</Text></Verre>
+        </Appear>
+        <Pressable onPress={tap} style={h.cases}>
+          {[0, 1, 2, 3].map((i) => (
+            <Verre key={i} radius={26} style={[h.case, i === code.length && h.caseOn]}>
+              {code[i] ? <Text style={h.caseT}>{code[i]}</Text> : i === code.length ? <View style={h.caret} /> : null}
+            </Verre>
+          ))}
+        </Pressable>
+        <Text style={h.aide}>Touche les cases pour saisir le code</Text>
+        <Pressable onPress={entrer} style={{ alignSelf: 'center', marginTop: 18 }}>
+          <Verre radius={30} style={h.qr}>
+            <Ionicons name="qr-code-outline" size={26} color={C.bleu} />
+            <Text style={h.qrT}>Scanner un QR code</Text>
+          </Verre>
+        </Pressable>
+        <View style={{ flex: 1 }} />
+        <Pill label="Rejoindre" onPress={() => (code.length === 4 ? entrer() : setCode(keys.join('')))} />
+      </View>
     </View>
   );
 }
 
 const h = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  top: { position: 'absolute', top: 60, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  logo: { width: 56, height: 56, borderRadius: 16 },
-  bottom: { position: 'absolute', left: 20, right: 20, bottom: 44, gap: 12 },
-  sec: { fontSize: 20, fontWeight: '900', color: C.texte, marginTop: 30, marginBottom: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F2F6FF', borderRadius: 24, padding: 14, marginBottom: 10 },
-  ic: { width: 46, height: 46, borderRadius: 16, backgroundColor: C.bleu, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  center: { ...(StyleSheet.absoluteFill as object), bottom: 260, alignItems: 'center', justifyContent: 'center' },
+  top: { position: 'absolute', top: 62, left: 18, right: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  logo: { width: 84, height: 84, borderRadius: 24, borderWidth: 4, borderColor: '#fff', shadowColor: C.bleu, shadowOpacity: 0.5, shadowRadius: 14 },
+  dot: { position: 'absolute', right: 0, bottom: 2, width: 18, height: 18, borderRadius: 9, backgroundColor: C.bleu, borderWidth: 3, borderColor: '#fff' },
+  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, paddingHorizontal: 22, paddingTop: 14, paddingBottom: 46 },
+  grab: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: '#C3CCDD', marginBottom: 14 },
+  nom: { fontSize: 26, fontWeight: '900', color: C.texte },
+  sec: { fontSize: 22, fontWeight: '900', color: C.texte, marginTop: 30, marginBottom: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', padding: 14 },
+  ic: { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
   rowT: { fontSize: 18, fontWeight: '800', color: C.texte },
-  cases: { flexDirection: 'row', justifyContent: 'center', gap: 12, marginVertical: 40 },
-  case: { width: 70, height: 86, borderRadius: 22, backgroundColor: '#F2F6FF', borderWidth: 3, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
-  caseT: { fontSize: 44, fontWeight: '900', color: C.texte },
+  close: { width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', shadowColor: '#2B5FA8', shadowOpacity: 0.2, shadowRadius: 10 },
+  titre: { fontSize: 30, fontWeight: '900', color: '#0A0F2E', letterSpacing: -0.8 },
+  cases: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 44 },
+  case: { width: 76, height: 92, alignItems: 'center', justifyContent: 'center' },
+  caseOn: { borderColor: C.bleu, borderWidth: 3, shadowColor: C.bleu, shadowOpacity: 0.6, shadowRadius: 14 },
+  caseT: { fontSize: 50, fontWeight: '900', color: '#0A0F2E' },
+  caret: { width: 3, height: 44, borderRadius: 2, backgroundColor: C.bleu },
+  aide: { textAlign: 'center', color: '#4A5670', fontSize: 14, marginTop: 14, fontWeight: '500' },
+  qr: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 22 },
+  qrT: { fontSize: 18, fontWeight: '800', color: C.bleu },
 });
