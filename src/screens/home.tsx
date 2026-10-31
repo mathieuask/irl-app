@@ -77,7 +77,7 @@ export function Rejoindre({ nav, p }: { nav: Nav; p: any }) {
         </Appear>
         <Pressable onPress={tap} style={h.cases}>
           {[0, 1, 2, 3].map((i) => (
-            <Verre key={i} radius={26} style={[h.case, i === code.length && h.caseOn]}>
+            <Verre key={i} radius={26} style={(i === code.length ? { ...h.case, ...h.caseOn } : h.case) as any}>
               {code[i] ? <Text style={h.caseT}>{code[i]}</Text> : i === code.length ? <View style={h.caret} /> : null}
             </Verre>
           ))}
