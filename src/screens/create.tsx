@@ -49,10 +49,13 @@ const CARDS: JeuCard[] = [
 ];
 
 export function ChoixJeu({ nav }: { nav: Nav; p: any }) {
+  const [pw, setPw] = useState<JeuCard | null>(null);
+  const [, maj] = useState(0);
   const choisir = (j: JeuCard) => {
     if (j.free || session.premium) nav.go('distance', { jeu: j.id });
-    else nav.go('paywall', { jeu: j.id });
+    else setPw(j);
   };
+  const [manhunt, geo, objet] = CARDS;
   return (
     <View style={{ flex: 1 }}>
       <Fond veil={0.1} />
@@ -61,32 +64,60 @@ export function ChoixJeu({ nav }: { nav: Nav; p: any }) {
         <Text style={c.titre}>Choisis ton jeu</Text>
       </View>
       <View style={c.liste}>
-        {CARDS.map((j, i) => {
-          const lock = !j.free && !session.premium;
-          return (
-            <Appear key={j.id} delay={i * 110} style={{ flex: 1 }}>
-              <Pressable onPress={() => choisir(j)} style={({ pressed }) => [c.card, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
-                <View style={c.photo}>
-                  {j.id === 'objet'
-                    ? <Image source={j.img} style={{ position: 'absolute', width: 800, height: 1682, left: -440, top: -864 }} />
-                    : <Image source={j.img} resizeMode="cover" style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]} />}
-                  {lock ? <View style={c.lock}><Ionicons name="lock-closed" size={18} color={C.bleu} /></View> : null}
-                  {j.free ? <View style={c.gratuit}><Text style={c.gratuitT}>Gratuit</Text></View> : null}
-                </View>
-                <Verre radius={26} style={c.label}>
-                  <View style={c.ic}><Ionicons name={j.icone} size={26} color="#fff" /></View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={c.nom}>{j.nom}</Text>
-                    <Text style={c.sous}>{j.sous}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={22} color={lock ? '#B6C2D6' : C.bleu} />
-                </Verre>
-              </Pressable>
+        <Appear style={{ flex: 1.2 }}>
+          <CarteJeu j={manhunt} grand onPress={() => choisir(manhunt)} />
+        </Appear>
+        <View style={c.rang}>
+          {[geo, objet].map((j, i) => (
+            <Appear key={j.id} delay={(i + 1) * 110} style={{ flex: 1 }}>
+              <CarteJeu j={j} onPress={() => choisir(j)} />
             </Appear>
-          );
-        })}
+          ))}
+        </View>
       </View>
+      {pw ? (
+        <PaywallFeuille
+          onFermer={() => setPw(null)}
+          onSuite={() => { const jeu = pw.id; setPw(null); maj((x) => x + 1); nav.go('distance', { jeu }); }}
+        />
+      ) : null}
     </View>
+  );
+}
+
+// Rogne rue.jpg (853 x 1794) sur une zone propre, sans les retouches grises de l'image d'origine.
+function Recadre({ source, x, y, srcW, pw }: { source: any; x: number; y: number; srcW: number; pw: number }) {
+  const k = pw / srcW;
+  return <Image source={source} style={{ position: 'absolute', width: 853 * k, height: 1794 * k, left: -x * k, top: -y * k }} />;
+}
+
+function CarteJeu({ j, grand, onPress }: { j: JeuCard; grand?: boolean; onPress: () => void }) {
+  const lock = !j.free && !session.premium;
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [c.card, { transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
+      <View style={c.photo}>
+        {j.id === 'geo'
+          ? <Image source={j.img} resizeMode="cover" style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]} />
+          : <Recadre source={j.img} x={270} y={j.id === 'objet' ? 760 : 765} srcW={j.id === 'objet' ? 295 : 583} pw={grand ? W - 44 : (W - 50) / 2 - 8} />}
+        {lock ? <View style={c.lock}><Ionicons name="lock-closed" size={18} color={C.bleu} /></View> : null}
+        {j.free ? <View style={c.gratuit}><Text style={c.gratuitT}>Gratuit</Text></View> : null}
+      </View>
+      {grand ? (
+        <Verre radius={26} style={c.label}>
+          <View style={c.ic}><Ionicons name={j.icone} size={26} color="#fff" /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={c.nom}>{j.nom}</Text>
+            <Text style={c.sous}>{j.sous}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={22} color={C.bleu} />
+        </Verre>
+      ) : (
+        <Verre radius={22} style={c.labelP}>
+          <Text style={c.nomP} numberOfLines={1} adjustsFontSizeToFit>{j.nom}</Text>
+          <Text style={c.sousP} numberOfLines={2}>{j.sous}</Text>
+        </Verre>
+      )}
+    </Pressable>
   );
 }
 
@@ -98,15 +129,72 @@ const FEATURES = [
 
 type Etat = 'idle' | 'feuille' | 'attente' | 'fait';
 
-export function Paywall({ nav, p }: { nav: Nav; p: any }) {
+function usePaywall(onSuite: () => void) {
   const [sel, setSel] = useState<'sem' | 'an'>('an');
   const [etat, setEtat] = useState<Etat>('idle');
-  const suite = () => nav.replace('distance', p);
   const payer = () => {
     setEtat('attente');
     setTimeout(() => { session.premium = true; play('ding'); setEtat('fait'); }, 1500);
   };
-  const an = sel === 'an';
+  return { sel, setSel, etat, setEtat, payer, an: sel === 'an', onSuite };
+}
+
+type PW = ReturnType<typeof usePaywall>;
+
+function PaywallContenu({ pw, onFermer, style }: { pw: PW; onFermer: () => void; style: any }) {
+  const { an, setSel, setEtat } = pw;
+  return (
+    <View style={style}>
+      <Pressable onPress={onFermer} hitSlop={12} style={c.fermer}><Ionicons name="close" size={22} color={C.texte} /></Pressable>
+      <Appear from={14} style={{ alignItems: 'center' }}>
+        <Image source={IMG.logo} style={c.logo} />
+        <Text style={c.pwT}>Tous les jeux</Text>
+      </Appear>
+      <View style={{ marginTop: 6 }}>
+        {FEATURES.map((f) => (
+          <View key={f.t} style={c.li}>
+            <View style={c.liIc}><Ionicons name={f.ic as any} size={22} color={C.bleu} /></View>
+            <Text style={c.liT}>{f.t}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={c.offres}>
+        <Offre on={!an} t="Semaine" prix="3,99 €" onPress={() => setSel('sem')} />
+        <Offre on={an} t="Année" prix="29,99 €" sous="2,50 € par mois" badge="Le plus choisi" onPress={() => setSel('an')} />
+      </View>
+      <View style={{ flex: 1, minHeight: 14 }} />
+      <Pill label={an ? 'Essayer gratuitement' : "S'abonner"} onPress={() => setEtat('feuille')} />
+      <Text style={c.small}>{an ? 'Aucun paiement maintenant' : 'Annulable à tout moment'}</Text>
+    </View>
+  );
+}
+
+function PaiementPw({ pw }: { pw: PW }) {
+  return pw.etat !== 'idle'
+    ? <FeuillePaiement etat={pw.etat} an={pw.an} onPayer={pw.payer} onFermer={() => pw.setEtat('idle')} onSuite={pw.onSuite} />
+    : null;
+}
+
+// Feuille qui monte depuis le bas de « Choisir un jeu » : prix, puis paiement simulé qui déverrouille.
+function PaywallFeuille({ onFermer, onSuite }: { onFermer: () => void; onSuite: () => void }) {
+  const pw = usePaywall(onSuite);
+  const y = useRef(new Animated.Value(640)).current;
+  useEffect(() => {
+    Animated.timing(y, { toValue: 0, duration: 340, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, []);
+  return (
+    <View style={[StyleSheet.absoluteFill, { justifyContent: 'flex-end', backgroundColor: 'rgba(3,6,28,0.45)' }]}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onFermer} />
+      <Animated.View style={{ transform: [{ translateY: y }] }}>
+        <PaywallContenu pw={pw} onFermer={onFermer} style={c.feuillePw} />
+      </Animated.View>
+      <PaiementPw pw={pw} />
+    </View>
+  );
+}
+
+export function Paywall({ nav, p }: { nav: Nav; p: any }) {
+  const pw = usePaywall(() => nav.replace('distance', p));
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <View style={{ height: 270 }}>
@@ -116,30 +204,8 @@ export function Paywall({ nav, p }: { nav: Nav; p: any }) {
           <View style={{ position: 'absolute' }}><MoiPin size={52} halo={0} /></View>
         </View>
       </View>
-      <View style={c.sheet}>
-        <Pressable onPress={nav.back} hitSlop={12} style={c.fermer}><Ionicons name="close" size={22} color={C.texte} /></Pressable>
-        <Appear from={14} style={{ alignItems: 'center' }}>
-          <Image source={IMG.logo} style={c.logo} />
-          <Text style={c.pwT}>Tous les jeux</Text>
-        </Appear>
-        <View style={{ marginTop: 6 }}>
-          {FEATURES.map((f) => (
-            <View key={f.t} style={c.li}>
-              <View style={c.liIc}><Ionicons name={f.ic as any} size={22} color={C.bleu} /></View>
-              <Text style={c.liT}>{f.t}</Text>
-            </View>
-          ))}
-        </View>
-        <View style={c.offres}>
-          <Offre on={!an} t="Semaine" prix="3,99 €" onPress={() => setSel('sem')} />
-          <Offre on={an} t="Année" prix="29,99 €" sous="2,50 € par mois" badge="Le plus choisi" onPress={() => setSel('an')} />
-        </View>
-        <View style={{ flex: 1 }} />
-        <Pill label={an ? 'Essayer gratuitement' : "S'abonner"} onPress={() => setEtat('feuille')} />
-        <Text style={c.small}>{an ? 'Aucun paiement maintenant' : 'Annulable à tout moment'}</Text>
-        <View style={c.pied}><Text style={c.piedT}>Restaurer</Text><View style={c.sep} /><Text style={c.piedT}>Conditions</Text></View>
-      </View>
-      {etat !== 'idle' ? <FeuillePaiement etat={etat} an={an} onPayer={payer} onFermer={() => setEtat('idle')} onSuite={suite} /> : null}
+      <PaywallContenu pw={pw} onFermer={nav.back} style={c.sheet} />
+      <PaiementPw pw={pw} />
     </View>
   );
 }
@@ -262,6 +328,10 @@ const c = StyleSheet.create({
   top: { paddingTop: 64, paddingHorizontal: 20 },
   titre: { position: 'absolute', top: 64, left: 0, right: 0, fontSize: 36, fontWeight: '900', color: C.texte, letterSpacing: -1, textAlign: 'center', lineHeight: 44 },
   liste: { flex: 1, paddingHorizontal: 18, paddingTop: 22, paddingBottom: 36, gap: 14 },
+  rang: { flex: 1, flexDirection: 'row', gap: 14 },
+  labelP: { position: 'absolute', left: 8, right: 8, bottom: 8, paddingHorizontal: 12, paddingVertical: 10 },
+  nomP: { fontSize: 20, fontWeight: '900', color: C.texte, letterSpacing: -0.5 },
+  sousP: { fontSize: 13, fontWeight: '600', color: C.gris, marginTop: 1 },
   card: { flex: 1, borderRadius: 30, backgroundColor: '#fff', padding: 4, shadowColor: '#2B5FA8', shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } },
   photo: { flex: 1, borderRadius: 26, overflow: 'hidden', backgroundColor: '#DCEBFA' },
   label: { position: 'absolute', left: 10, right: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, gap: 12 },
@@ -272,6 +342,7 @@ const c = StyleSheet.create({
   gratuit: { position: 'absolute', top: 12, right: 12, backgroundColor: C.bleu, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 2, borderColor: '#fff' },
   gratuitT: { color: '#fff', fontWeight: '900', fontSize: 14 },
   centre: { alignItems: 'center', justifyContent: 'center' },
+  feuillePw: { height: 570, backgroundColor: '#fff', borderTopLeftRadius: 34, borderTopRightRadius: 34, paddingHorizontal: 22, paddingTop: 14, paddingBottom: 36 },
   sheet: { flex: 1, marginTop: -34, backgroundColor: '#fff', borderTopLeftRadius: 34, borderTopRightRadius: 34, paddingHorizontal: 22, paddingTop: 14, paddingBottom: 30, shadowColor: '#2B5FA8', shadowOpacity: 0.25, shadowRadius: 20, shadowOffset: { width: 0, height: -6 } },
   fermer: { position: 'absolute', top: 14, left: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: '#EEF3FA', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
   logo: { width: 66, height: 66, borderRadius: 18 },

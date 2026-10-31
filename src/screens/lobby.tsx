@@ -143,8 +143,8 @@ function FeuillePartage({ onChoix, onFermer }: { onChoix: (t: string) => void; o
 const BULLES: { id: AvKey; nom: string; x: number; y: number }[] = [
   { id: 'lea', nom: 'Léa', x: 0.74, y: 0.27 },
   { id: 'hugo', nom: 'Hugo', x: 0.2, y: 0.3 },
-  { id: 'ines', nom: 'Inès', x: 0.14, y: 0.55 },
-  { id: 'sam', nom: 'Sam', x: 0.8, y: 0.55 },
+  { id: 'ines', nom: 'Inès', x: 0.14, y: 0.6 },
+  { id: 'sam', nom: 'Sam', x: 0.8, y: 0.6 },
   { id: 'theo', nom: 'Théo', x: 0.62, y: 0.78 },
 ];
 
@@ -176,13 +176,13 @@ export function Countdown({ nav, p }: { nav: Nav; p: any }) {
           <View style={l.bulleNom}><Text style={l.bulleNomT}>{b.nom}</Text></View>
         </View>
       ))}
-      <View style={{ position: 'absolute', left: W / 2 - 29, top: 0.62 * H - 29 }}><MoiPin size={58} halo={0} /></View>
+      <View style={{ position: 'absolute', left: W / 2, top: 0.7 * H }}><MoiPin size={58} halo={0} /></View>
       <Pressable onPress={() => nav.reset('home')} style={l.fermer}><Ionicons name="close" size={26} color={C.texte} /></Pressable>
       <View style={l.hautC}>
         <Image source={IMG.logo} style={l.logoC} />
         <Verre radius={24} style={l.chipInfo}><Text style={l.chipInfoT}>{NOM_JEU[p.jeu] || 'Manhunt'} · 6 joueurs</Text></Verre>
       </View>
-      <View style={[StyleSheet.absoluteFill, l.centre, { paddingBottom: 60 }]} pointerEvents="none">
+      <View style={[StyleSheet.absoluteFill, l.centre, { paddingBottom: 190 }]} pointerEvents="none">
         <Animated.Text style={[l.cd, n === 0 && { fontSize: 150 }, { opacity: s, transform: [{ scale }] }]}>{n > 0 ? n : 'GO'}</Animated.Text>
         <Verre radius={24} style={l.consigne}><Text style={l.consigneT}>{consigne}</Text></Verre>
       </View>
@@ -282,7 +282,7 @@ const l = StyleSheet.create({
   logoC: { width: 64, height: 64, borderRadius: 16, borderWidth: 3, borderColor: '#fff' },
   chipInfo: { paddingHorizontal: 22, paddingVertical: 10, marginTop: 10 },
   chipInfoT: { fontSize: 22, fontWeight: '900', color: C.texte, letterSpacing: -0.4 },
-  cd: { fontSize: 250, fontWeight: '900', color: '#fff', textShadowColor: C.bleu, textShadowRadius: 26, textShadowOffset: { width: 0, height: 6 }, lineHeight: 270 },
+  cd: { fontSize: 220, fontWeight: '900', color: '#fff', textShadowColor: C.bleu, textShadowRadius: 26, textShadowOffset: { width: 0, height: 6 }, lineHeight: 240 },
   consigne: { paddingHorizontal: 22, paddingVertical: 12, marginTop: 4 },
   consigneT: { fontSize: 22, fontWeight: '900', color: C.texte, textAlign: 'center' },
   zoneCarte: { position: 'absolute', left: 24, right: 24, bottom: 40, flexDirection: 'row', alignItems: 'center', gap: 16, padding: 16 },
