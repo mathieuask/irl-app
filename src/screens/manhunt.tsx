@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useRef, useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { Nav } from '../nav';
 import { AV, C } from '../theme';
-import { Appear, Avatar, BigTimer, Btn, Glass, MapBg, Me, mmss, useCountdown } from '../ui';
+import { Btn, useCountdown } from '../ui';
+import { Chrono, H, MapClean, Marker, PhotoPin, Pill, Ring, ScaleBar, Seg, W, mmss } from '../jeuui';
 import { play } from '../sound';
 
 export function Manhunt({ nav, p }: { nav: Nav; p: any }) {
@@ -11,81 +11,74 @@ export function Manhunt({ nav, p }: { nav: Nav; p: any }) {
 }
 
 function Fuyard({ nav, p }: { nav: Nav; p: any }) {
+  const t0 = useRef(Date.now()).current;
   const t = useCountdown(14 * 60 + 32);
   const rev = useCountdown(48);
-  const pulse = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    Animated.loop(Animated.sequence([
-      Animated.timing(pulse, { toValue: 1.06, duration: 500, useNativeDriver: true }),
-      Animated.timing(pulse, { toValue: 1, duration: 500, useNativeDriver: true }),
-    ])).start();
-  }, []);
+  const me = { x: W / 2, y: H * 0.5 };
+  const lea = { x: 92, y: H * 0.31 };
+  const sam = { x: W - 92, y: H * 0.67 };
+  const trouve = () => { play('impact'); nav.replace('fin', { ...p, issue: 'trouve', temps: Math.floor((Date.now() - t0) / 1000) }); };
   return (
     <View style={{ flex: 1 }}>
-      <MapBg zone={300}>
-        <View style={m.center}><Me /></View>
-        <View style={[m.pin, { top: '30%', left: '18%' }]}><Avatar src={AV.lea} size={44} ring={C.rouge} /></View>
-        <View style={[m.pin, { top: '62%', left: '70%' }]}><Avatar src={AV.sam} size={44} ring={C.rouge} /></View>
-      </MapBg>
+      <MapClean />
+      <Ring cx={me.x} cy={me.y} d={W - 24} />
+      <Seg a={lea} b={me} color="rgba(252,29,51,0.25)" w={26} />
+      <Seg a={sam} b={me} color="rgba(252,29,51,0.25)" w={26} />
+      <Marker x={me.x} y={me.y} color={C.bleu} />
+      <PhotoPin x={lea.x} y={lea.y} src={AV.lea} ring={C.rouge} dot={C.rouge} size={72} line2="Léa · il y a 1 min" />
+      <PhotoPin x={sam.x} y={sam.y} src={AV.sam} ring={C.rouge} dot={C.rouge} size={72} line2="Sam · il y a 40 s" />
       <View style={m.top}>
-        <Glass style={{ alignItems: 'center', paddingVertical: 10 }}>
-          <Text style={m.lbl}>Tiens encore</Text>
-          <BigTimer s={t} />
-        </Glass>
-        <Animated.View style={[m.alert, { transform: [{ scale: pulse }] }]}>
-          <Ionicons name="eye" size={20} color="#fff" />
-          <Text style={m.alertT}>Révélé dans {mmss(rev)}</Text>
-        </Animated.View>
+        <Chrono s={t} color={C.bleu} />
+        <Pill style={{ marginTop: 10, flexDirection: 'row', paddingHorizontal: 22, paddingVertical: 10 }}>
+          <Text style={m.rev}>Révélé dans </Text><Text style={[m.rev, { color: C.bleu }]}>{mmss(rev)}</Text>
+        </Pill>
       </View>
       <View style={m.bottom}>
-        <Btn label="J'ai été trouvé" kind="rouge" icon="hand-left" onPress={() => { play('impact'); nav.replace('fin', { ...p, issue: 'trouve', temps: 14 * 60 + 32 - t }); }} />
+        <Pill style={{ flexDirection: 'row', justifyContent: 'flex-start', paddingVertical: 12, paddingHorizontal: 14, alignSelf: 'stretch' }}>
+          <View style={{ flexDirection: 'row', marginRight: 8 }}>
+            {[AV.lea, AV.sam].map((a, i) => <Image key={i} source={a} style={[m.mini, i > 0 && { marginLeft: -14 }]} />)}
+          </View>
+          <Text style={m.big}>2</Text><Text style={m.chas}> chasseurs</Text>
+        </Pill>
+        <Btn label="J'ai été trouvé" kind="blanc" onPress={trouve} style={{ marginTop: 14, alignSelf: 'center', paddingHorizontal: 34 }} />
       </View>
     </View>
   );
 }
 
+// Échelle de la carte : 12 px par mètre. Toute distance affichée se déduit des positions à l'écran.
+const PX_PER_M = 12;
+const metres = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.round(Math.hypot(a.x - b.x, a.y - b.y) / PX_PER_M);
+
 function Chasseur({ nav, p }: { nav: Nav; p: any }) {
-  const t = useCountdown(12 * 60 + 5);
+  const t0 = useRef(Date.now()).current;
+  const t = useCountdown(7 * 60 + 42);
   const [sel, setSel] = useState(false);
-  const [d, setD] = useState(64);
-  useEffect(() => {
-    if (!sel) return;
-    const id = setInterval(() => setD((x) => Math.max(8, x - 7)), 600);
-    return () => clearInterval(id);
-  }, [sel]);
-  const proche = d <= 20;
+  const me = { x: W / 2, y: H * 0.5 };
+  const hugo = { x: me.x - 100, y: me.y - 110 };
+  const lea = { x: me.x + 95, y: me.y - 195 };
+  const d = metres(me, hugo);
+  const capturer = () => { play('impact'); nav.replace('fin', { ...p, issue: 'capture', temps: Math.floor((Date.now() - t0) / 1000) }); };
   return (
     <View style={{ flex: 1 }}>
-      <MapBg zone={300}>
-        <View style={m.center}><Me /></View>
-        <Pressable onPress={() => { play('pop'); setSel(true); }} style={[m.pin, { top: '36%', left: '58%', alignItems: 'center' }]}>
-          <Avatar src={AV.hugo} size={sel ? 70 : 58} ring={sel ? C.rouge : C.blanc} />
-          <View style={m.bubble}><Text style={m.bubbleT}>Hugo · il y a 2 min</Text></View>
-        </Pressable>
-        <View style={[m.pin, { top: '64%', left: '22%' }]}><Avatar src={AV.lea} size={40} ring={C.bleu} /></View>
-      </MapBg>
-      <View style={m.top}>
-        <Glass style={{ alignItems: 'center', paddingVertical: 10 }}>
-          <Text style={m.lbl}>Reste</Text>
-          <BigTimer s={t} color={C.rouge} />
-        </Glass>
-      </View>
+      <MapClean />
+      <Ring cx={me.x} cy={me.y + 20} d={W + 40} />
+      {sel ? <Seg a={me} b={hugo} color="rgba(252,29,51,0.3)" w={34} /> : null}
+      <Marker x={me.x} y={me.y} color={C.rouge} />
+      <PhotoPin x={lea.x} y={lea.y} src={AV.lea} ring={C.bleu} size={54} line2="il y a 30 s" line1="Léa" />
+      <PhotoPin x={hugo.x} y={hugo.y} src={AV.hugo} ring={C.rouge} dot={C.rouge} size={sel ? 96 : 84} line1="Hugo" line2="il y a 2 min"
+        onPress={() => { play('pop'); setSel(true); }} />
+      <ScaleBar px={PX_PER_M * 10} label="10 m" />
+      <View style={m.top}><Chrono s={t} /></View>
       <View style={m.bottom}>
         {sel ? (
-          <Appear>
-            <Glass style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <Avatar src={AV.hugo} size={52} ring={C.rouge} />
-              <View style={{ marginLeft: 12, flex: 1 }}>
-                <Text style={m.who}>Hugo</Text>
-                <Text style={[m.dist, proche && { color: C.rouge }]}>à {d} m</Text>
-              </View>
-              <Ionicons name="navigate" size={28} color={C.bleu} />
-            </Glass>
-            <Btn label={proche ? 'Capturer' : 'Rapproche-toi (20 m)'} kind={proche ? 'rouge' : 'blanc'} icon="flash"
-              onPress={() => { if (proche) { play('impact'); nav.replace('fin', { ...p, issue: 'capture', temps: 12 * 60 + 5 - t }); } else setD(18); }} />
-          </Appear>
+          <View style={m.card}>
+            <Text style={m.who}>Hugo</Text>
+            <Text style={m.dist}>à {d} m</Text>
+            <Btn label="Capturer" kind="rouge" onPress={capturer} style={{ alignSelf: 'stretch', marginTop: 8, height: 62 }} />
+          </View>
         ) : (
-          <Glass><Text style={m.hint}>Touche Hugo sur la carte pour le traquer</Text></Glass>
+          <Pill style={{ paddingVertical: 16, paddingHorizontal: 20 }}><Text style={m.hint}>Touche Hugo sur la carte</Text></Pill>
         )}
       </View>
     </View>
@@ -93,16 +86,15 @@ function Chasseur({ nav, p }: { nav: Nav; p: any }) {
 }
 
 const m = StyleSheet.create({
-  center: { ...StyleSheet.absoluteFill as any, alignItems: 'center', justifyContent: 'center' },
-  pin: { position: 'absolute' },
-  top: { position: 'absolute', top: 58, left: 20, right: 20, gap: 10 },
-  lbl: { fontSize: 15, fontWeight: '800', color: '#6B7280', marginBottom: -6 },
-  alert: { flexDirection: 'row', gap: 8, alignSelf: 'center', backgroundColor: C.rouge, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center' },
-  alertT: { color: '#fff', fontWeight: '900', fontSize: 17 },
-  bottom: { position: 'absolute', left: 20, right: 20, bottom: 40 },
-  bubble: { backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5, marginTop: 4 },
-  bubbleT: { fontWeight: '800', fontSize: 12, color: C.texte },
-  who: { fontSize: 20, fontWeight: '900', color: C.texte },
-  dist: { fontSize: 28, fontWeight: '900', color: C.bleu },
-  hint: { textAlign: 'center', fontWeight: '800', fontSize: 16, color: C.texte },
+  top: { position: 'absolute', top: 54, left: 0, right: 0, alignItems: 'center' },
+  rev: { fontSize: 22, fontWeight: '900', color: C.texte },
+  bottom: { position: 'absolute', left: 20, right: 20, bottom: 36 },
+  mini: { width: 52, height: 52, borderRadius: 26, borderWidth: 3, borderColor: '#fff' },
+  big: { fontSize: 36, fontWeight: '900', color: C.bleu },
+  chas: { fontSize: 19, fontWeight: '900', color: C.texte },
+  card: { backgroundColor: 'rgba(246,250,255,0.94)', borderRadius: 44, borderWidth: 2, borderColor: '#fff', padding: 14, paddingTop: 18, alignItems: 'center',
+    shadowColor: C.azur, shadowOpacity: 0.7, shadowRadius: 18, shadowOffset: { width: 0, height: 4 } },
+  who: { fontSize: 34, fontWeight: '900', color: C.texte, lineHeight: 38 },
+  dist: { fontSize: 30, fontWeight: '900', color: C.bleu, lineHeight: 34 },
+  hint: { fontWeight: '900', fontSize: 18, color: C.texte },
 });
