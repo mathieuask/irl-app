@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Nav } from '../nav';
 import { AV, C, IMG, JEUX } from '../theme';
 import { Appear, Avatar, Btn, MapBg, Me, st } from '../ui';
+import { Etape } from './perms';
 
 const W = Dimensions.get('window').width;
 
@@ -11,7 +12,7 @@ const SLIDES = [
   { k: 'logo' },
   { k: 'zone', t: 'Une zone. Un chrono.', s: 'Ta ville devient le terrain de jeu. Tout se passe dans le cercle.' },
   { k: 'jeux', t: 'Trois jeux, zéro règle à lire.', s: 'Manhunt, GeoGuessr, Trouve l\'objet. Tu comprends en une seconde.' },
-  { k: 'pos', t: 'Active ta position', s: 'Sans elle, impossible de savoir qui est dans la zone. Seulement pendant une partie.' },
+  { k: 'potes', t: 'Que tes potes.', s: 'Pas d\'inconnus, pas de liste d\'amis. Un code, ta bande rejoint, c\'est parti.' },
 ];
 
 export function Onboarding({ nav }: { nav: Nav; p: any }) {
@@ -19,7 +20,7 @@ export function Onboarding({ nav }: { nav: Nav; p: any }) {
   const ref = useRef<any>(null);
   const x = useRef(new Animated.Value(0)).current;
   const next = () => {
-    if (i < SLIDES.length - 1) ref.current?.scrollTo({ x: (i + 1) * W, animated: true });
+    if (i < SLIDES.length - 1) { ref.current?.scrollTo({ x: (i + 1) * W, animated: true }); setI(i + 1); }
     else nav.go('pseudo');
   };
   return (
@@ -43,7 +44,7 @@ export function Onboarding({ nav }: { nav: Nav; p: any }) {
         <View style={o.dots}>
           {SLIDES.map((_, idx) => <View key={idx} style={[o.dot, idx === i && o.dotOn]} />)}
         </View>
-        <Btn label={i === 0 ? 'Commencer' : i === SLIDES.length - 1 ? 'Autoriser' : 'Suivant'} kind="blanc" onPress={next} />
+        <Btn label={i === 0 ? 'Commencer' : i === SLIDES.length - 1 ? 'Créer mon profil' : 'Suivant'} kind="blanc" onPress={next} />
         {i === 0 ? <Pressable onPress={() => nav.go('home')}><Text style={o.link}>J'ai déjà un compte</Text></Pressable> : <View style={{ height: 38 }} />}
       </View>
     </View>
@@ -74,7 +75,16 @@ function renderSlide(sl: any) {
             ))}
           </View>
         )}
-        {sl.k === 'pos' && <MapBg zone={160}><View style={o.center}><Ionicons name="location" size={64} color={C.rouge} /></View></MapBg>}
+        {sl.k === 'potes' && (
+          <MapBg zone={220}>
+            <View style={o.center}><Me /></View>
+            {(['lea', 'hugo', 'sam', 'ines'] as const).map((id, n) => (
+              <View key={id} style={{ position: 'absolute', top: `${[28, 60, 34, 66][n]}%` as any, left: `${[22, 26, 66, 64][n]}%` as any }}>
+                <Avatar src={AV[id]} size={52} />
+              </View>
+            ))}
+          </MapBg>
+        )}
       </View>
       <Text style={o.t}>{sl.t}</Text>
       <Text style={o.s}>{sl.s}</Text>
@@ -84,21 +94,16 @@ function renderSlide(sl: any) {
 
 export function Pseudo({ nav }: { nav: Nav; p: any }) {
   const [v, setV] = useState('Mathieu');
-  const [selfie, setSelfie] = useState(false);
   return (
     <View style={[st.screen, { backgroundColor: '#fff' }]}>
+      <Etape n={1} />
       <Appear><Text style={st.h1}>Comment tes potes t'appellent ?</Text></Appear>
       <Appear delay={120}>
-        <TextInput value={v} onChangeText={setV} style={o.input} placeholder="Ton pseudo" />
+        <TextInput value={v} onChangeText={setV} style={o.input} placeholder="Ton pseudo" autoFocus={false} />
       </Appear>
-      <Appear delay={240} style={{ alignItems: 'center', marginTop: 24 }}>
-        <Pressable onPress={() => setSelfie(true)} style={o.selfie}>
-          {selfie ? <Avatar src={AV.moi} size={150} ring={C.bleu} /> : <Ionicons name="camera" size={48} color={C.bleu} />}
-        </Pressable>
-        <Text style={[st.p, { marginTop: 12 }]}>{selfie ? 'Parfait, tes potes te reconnaîtront.' : 'Touche pour prendre un selfie'}</Text>
-      </Appear>
+      <Appear delay={220}><Text style={[st.p, { marginTop: 12 }]}>Pas d'âge, pas de numéro. Juste un pseudo.</Text></Appear>
       <View style={{ flex: 1 }} />
-      <Btn label="C'est parti" onPress={() => nav.reset('home')} />
+      <Btn label="Continuer" onPress={() => nav.go('selfie', { pseudo: v })} />
     </View>
   );
 }
